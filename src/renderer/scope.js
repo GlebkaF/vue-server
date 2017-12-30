@@ -560,20 +560,24 @@ module.exports = function (globals) {
         // Compute "computed" props
         buildComputedProps: function (vm) {
             if (vm.$options.computed) {
-                var item;
                 for (var name in vm.$options.computed) {
-                    item = vm.$options.computed[name];
-
+                    const item = vm.$options.computed[name];
                     if (typeof item === 'function') {
-                        try {
-                            vm[name] = item.call(vm);
-                        } catch (error) {
-                            vm.__states.$logger.debug(
-                                'Computed property "' + name + '" compilation error',
-                                common.onLogMessage(vm), '\n',
-                                error
-                            );
-                        }
+                        Object.defineProperty(vm, name, {
+                            get: function () {
+                                try {
+                                    return item.call(vm)
+                                } catch (error) {
+                                    vm.__states.$logger.debug(
+                                        'Computed property "' + name + '" compilation error',
+                                        common.onLogMessage(vm), '\n',
+                                        error
+                                    );
+                                }
+                            },
+                            configurable: true,
+                            enumerable: true
+                        })
                     } else {
                         try {
                             vm[name] = item.get.call(vm);
